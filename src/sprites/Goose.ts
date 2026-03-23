@@ -16,7 +16,7 @@ export class Goose extends Physics.Arcade.Sprite {
     pointer: Input.Pointer;
 
     attackSprite: Attack;
-    canAttack: boolean;
+    isAttacking: boolean;
 
     speed: number;
 
@@ -33,7 +33,7 @@ export class Goose extends Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
 
         this.attackSprite = new Attack(this.scene)
-        this.canAttack = true;
+        this.isAttacking = false;
         this.speed = Goose.MOVEMENT_SPEED;
     }
 
@@ -53,6 +53,8 @@ export class Goose extends Physics.Arcade.Sprite {
     }
 
     faceInDirectionOfPointer(): void {
+        if (this.isAttacking) return;
+
         if (this.pointer.x > this.x) {
             this.flipX = true;
         } else {
@@ -73,13 +75,13 @@ export class Goose extends Physics.Arcade.Sprite {
     }
 
     attack() {
-        if (!this.canAttack) return;
-        this.canAttack = false;
+        if (this.isAttacking) return;
+        this.isAttacking = true;
 
         this.scene.time.addEvent({
             delay: 500,
             callback: () => { 
-                this.canAttack = true;
+                this.isAttacking = false;
                 this.setTexture(Goose.SPRITE_KEY);
                 this.speed = Goose.MOVEMENT_SPEED;
             },
