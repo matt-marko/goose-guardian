@@ -1,14 +1,14 @@
 import { Input, Physics } from "phaser";
 import { KeyboardManager } from "../KeyboardManager";
 import { Attack } from "./Attack";
+import { Config } from "../Config";
 
 export class Goose extends Physics.Arcade.Sprite {
 
     static SPRITE_KEY = 'goose';
     static ATTACK_SPRITE_KEY = 'goose-attack';
 
-    static ROTATION_SPEED = 5;
-    static MOVEMENT_SPEED = 250;
+    static MOVEMENT_SPEED = Config.gooseSpeed;
     static SLOWED_SPEED = 150;
     static SCALE = 0.5; // TODO Perhaps the exporting can be different now with pixel art rendering
 

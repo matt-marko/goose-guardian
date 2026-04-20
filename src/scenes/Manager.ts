@@ -5,6 +5,7 @@ import { Tomato } from "../sprites/Tomato";
 import { Attack } from "../sprites/Attack";
 import { Background } from "./Background";
 import { PIXEL_FONT } from "../Fonts";
+import { Carrot } from "../sprites/Carrot";
 
 class Manager extends Scene {
     scenes = {
@@ -12,7 +13,7 @@ class Manager extends Scene {
         mainMenu: 'MainMenu',
         gooseGame: 'GooseGame',
         gameOver: 'GameOver',
-    }
+    } 
 
     constructor() {
         super({ key: 'Manager' })
@@ -24,8 +25,7 @@ class Manager extends Scene {
         this.load.image(Goose.SPRITE_KEY, 'assets/goose.png');
         this.load.image(Goose.ATTACK_SPRITE_KEY, 'assets/goose-attack.png');
         
-        // TODO: carrot
-        this.load.image('carrot', 'assets/carrot.png');
+        this.load.image(Carrot.SPRITE_KEY, 'assets/carrot.png');
         this.load.image(Tomato.SPRITE_KEY, 'assets/tomato.png');
         this.load.image(Bullet.SPRITE_KEY, 'assets/bullet.png');
         this.load.image(Attack.SPRITE_KEY, 'assets/attack.png');

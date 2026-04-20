@@ -6,9 +6,11 @@ export abstract class Vegetable extends Phaser.Physics.Arcade.Sprite {
     static MOVEMENT_SPEED = 250;
 
     bounds: Phaser.Geom.Rectangle;
+    declare body: Phaser.Physics.Arcade.Body
 
-    spriteKey: string;
-    speed: number;
+    // spriteKey: string;
+    protected speed: number;
+    hasCollided = false; 
 
     constructor(
         scene: Phaser.Scene,
@@ -18,18 +20,21 @@ export abstract class Vegetable extends Phaser.Physics.Arcade.Sprite {
         y?: number,
     ) {
         super(scene, x ?? 0, y ?? 0, spriteKey);
+        
         this.setScale(0.5);
-
+        this.setOrigin(0.5, 0.5);
+        
         scene.add.existing(this);
         scene.physics.add.existing(this);
-        this.body!.setCircle(55, this.body!.halfWidth - 15, this.body!.halfHeight - 15);
+        
+        this.setCircle(55, this.body.halfWidth - 15, this.body.halfHeight - 15);
+ 
         this.speed = speed;
-
         this.bounds = this.scene.physics.world.bounds;
     }
 
     override update(): void {
-        const bounds = this.scene.physics.world.bounds
+        const bounds = this.bounds;
 
         if (
             this.active && (
@@ -41,37 +46,78 @@ export abstract class Vegetable extends Phaser.Physics.Arcade.Sprite {
         ) {  
             this.despawn();
         }
+
+        this.hasCollided = false;
     }
 
-    // spawn(): void {
-    //     const side = randomInt(0, 3);
+    collideWith(other: Vegetable) {
+        if (this.hasCollided || other.hasCollided) return;
 
-    //     switch (side) {
-    //         case 0: {
-    //             this.spawnLeftS ide();
-    //             break;
-    //         }
+        this.swapVelocities(other);
 
-    //         case 1: {
-    //             this.spawnTopSide();
-    //             break;
-    //         }
+        this.handleCollision(other);
+        other.handleCollision(this);
 
-    //         case 2: {
-    //             this.spawnRightSide();
-    //             break;
-    //         }
+        this.hasCollided = true;
+        other.hasCollided = true;
+    };
 
-    //         case 3: {
-    //             this.spawnBottomSide();
-    //             break;
-    //         }
-    //     }
+    swapVelocities(other: Vegetable) {
+        const v1 = this.body.velocity;
+        const v2 = other.body.velocity;
+        
+        const clonedV1 = new Phaser.Math.Vector2(v1.x, v1.y);
+        const clonedV2 = new Phaser.Math.Vector2(v2.x, v2.y);
 
-    //     if(this.body) this.body.enable = true;
-    //     this.setActive(true);
-    //     this.setVisible(true);
-    // }
+        clonedV1.normalize();
+        clonedV2.normalize();
+
+        this.setVelocity(clonedV2.x * this.speed, clonedV2.y * this.speed);
+        other.setVelocity(clonedV1.x * other.speed, clonedV1.y * other.speed); 
+    }
+
+    handleCollision(_: Vegetable): void {}
+
+    spawnRight() {
+        const spawnPoint = new Phaser.Math.Vector2(
+            this.bounds.right,
+            this.bounds.bottom / 2 - 20
+        );
+    
+        // const angle = -Phaser.Math.Angle.Between(
+        //     point.x,
+        //     point.y,
+        //     spawnPoint.x,
+        //     spawnPoint.y
+        // ) - Math.PI;
+
+        this.setPosition(spawnPoint.x, spawnPoint.y);
+        this.setVelocity(
+            - this.speed / 2,
+            0
+        );
+
+        this.enableVegetableBody();
+    }
+
+    spawnLeft() {
+        const spawnPoint = new Phaser.Math.Vector2(0, this.bounds.bottom / 2);
+    
+        // const angle = -Phaser.Math.Angle.Between(
+        //     point.x,
+        //     point.y,
+        //     spawnPoint.x,
+        //     spawnPoint.y
+        // ) - Math.PI;
+
+        this.setPosition(spawnPoint.x, spawnPoint.y);
+        this.setVelocity(
+            this.speed,
+            0
+        );
+
+        this.enableVegetableBody();
+    }
 
     spawnTowardsPoint(point: Phaser.Math.Vector2): void {
         const sideToSpawnFrom = randomInt(0, 3);
@@ -112,17 +158,23 @@ export abstract class Vegetable extends Phaser.Physics.Arcade.Sprite {
             this.speed * -Math.sin(angle)
         );
 
-        if(this.body) this.body.enable = true;
+        this.enableVegetableBody();
+    }
+
+    enableVegetableBody(): void {
+        this.enableBody();
         this.setActive(true);
         this.setVisible(true);
+
+        // TODO: Bounce needs to be set again
+        // this.setBounce(1);
     }
 
     despawn(): void {
         this.setActive(false);
         this.setVisible(false);
         this.setVelocity(0, 0);
-
-        this.body!.enable = false;
+        this.disableBody();
     }
 
     protected getRandomLeftSideSpawnPoint(): Phaser.Math.Vector2 {

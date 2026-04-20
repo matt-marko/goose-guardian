@@ -15,8 +15,6 @@ export class Carrot extends Vegetable {
         y?: number,
     ) {
         super(scene, Carrot.SPRITE_KEY, Carrot.MOVEMENT_SPEED, x ?? 0, y ?? 0);
-
-        this.setOrigin(0.5, 0.5);
     }
 
     override update(): void {
@@ -44,6 +42,17 @@ export class Carrot extends Vegetable {
             this.setVelocityX(this.speed * -Math.cos(adjustedAngle));
             this.setVelocityY(this.speed * -Math.sin(adjustedAngle));
         }
+    }
+
+    override handleCollision(other: Vegetable): void {
+        const thisCenter = new Phaser.Math.Vector2(this.x, this.y);
+        const otherCenter = new Phaser.Math.Vector2(other.x, other.y);
+
+        const lineOfAction = otherCenter.subtract(thisCenter);
+
+        const angle = lineOfAction.angle() + Math.PI / 2;
+
+        this.rotation = angle;
     }
 
     override spawnTowardsPoint(point: Phaser.Math.Vector2): void {

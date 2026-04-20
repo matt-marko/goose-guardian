@@ -1,7 +1,6 @@
 import { Cameras, GameObjects, Input, Physics, Scene } from 'phaser';
 import { Goose } from '../sprites/Goose';
 import { Tomato } from '../sprites/Tomato';
-import { Bullet } from '../sprites/Bullet';
 import { Attack } from '../sprites/Attack';
 import { LifeContainer } from '../LifeContainer';
 import { KeyboardManager } from '../KeyboardManager';
@@ -10,6 +9,7 @@ import { Background } from './Background';
 import { PIXEL_FONT, PIXEL_FONT_SIZE } from '../Fonts';
 import { Carrot } from '../sprites/Carrot';
 import { Vegetable } from '../sprites/Vegetable';
+import { Config } from '../Config';
 
 export class GooseGame extends Scene {
     camera: Cameras.Scene2D.Camera;
@@ -25,6 +25,8 @@ export class GooseGame extends Scene {
 
     tomatoGroup: Physics.Arcade.Group;
     carrotGroup: Physics.Arcade.Group;
+
+    vegetablesToCollide: Array<Physics.Arcade.Group>;
 
     pointer: Input.Pointer;
 
@@ -48,32 +50,37 @@ export class GooseGame extends Scene {
 
         this.tomatoGroup = this.physics.add.group({
             classType: Tomato,
-            maxSize: 5,
+            maxSize: 100,
             runChildUpdate: true,
         });
 
         this.carrotGroup = this.physics.add.group({
             classType: Carrot,
-            maxSize: 5,
+            maxSize: 10,
             runChildUpdate: true,
         });
 
+        this.vegetablesToCollide = [
+            this.tomatoGroup,
+            this.carrotGroup,
+        ];
+
         this.lifeContainer = new LifeContainer(this,
-            Goose.SPRITE_KEY, 
+            Goose.SPRITE_KEY,
             this.lives,
             this.physics.world.bounds.width - 40,
             40
         );
         this.lifeContainer.setScale(0.5);
-        
+
         this.setupColliders();
-        
+
         this.keyboardManager = new KeyboardManager(this);
 
         this.input.on('pointerdown', () => this.handleClick());
 
         this.pointer = this.input.activePointer;
-        
+
         this.scoreText = this.add.bitmapText(
             15,
             10,
@@ -81,9 +88,9 @@ export class GooseGame extends Scene {
             String(this.score),
             PIXEL_FONT_SIZE
         );
-    
+
         this.time.addEvent({
-            delay: 1000,
+            delay: 500,
             callback: () => this.spawnVegetable(),
             callbackScope: this,
             loop: true,
@@ -107,6 +114,8 @@ export class GooseGame extends Scene {
     setupColliders(): void {
         const collideVegetableWithGoose = (vegetable: Vegetable) => {
             vegetable.despawn();
+
+            if (Config.invincible) return;
 
             this.lives--;
             this.lifeContainer.decrementLives();
@@ -134,14 +143,30 @@ export class GooseGame extends Scene {
         this.physics.add.overlap(this.goose, this.tomatoGroup, (_: unknown, tomato: unknown) => {
             collideVegetableWithGoose(tomato as Tomato);
         });
-    
+
         this.physics.add.overlap(this.goose, this.carrotGroup, (_: unknown, carrot: unknown) => {
             collideVegetableWithGoose(carrot as Carrot);
         });
+
+        const n = this.vegetablesToCollide.length;
+
+        for (let i = 0; i < n; i++) {
+            for (let j = i; j < n; j++) {
+                const g1 = this.vegetablesToCollide[i];
+                const g2 = this.vegetablesToCollide[j];
+
+                this.physics.add.overlap(g1, g2, (v1: unknown, v2: unknown) => {
+                    const vegetable1 = v1 as Vegetable;
+                    const vegetable2 = v2 as Vegetable;
+
+                    vegetable1.collideWith(vegetable2);
+                });
+            }
+        }
     }
 
     spawnVegetable(): void {
-        const shouldSpawnTomato = Math.random() > 0.5;
+        const shouldSpawnTomato = Math.random() > 0.25;
 
         if (shouldSpawnTomato) {
             this.spawnTomato();
@@ -169,14 +194,6 @@ export class GooseGame extends Scene {
     handleClick(): void {
         this.goose.attack();
     }
-
-    // shootBullet(): void {
-    //     const bullet: Bullet = this.bulletGroup.get();
-
-    //     if (bullet) {
-    //         bullet.shoot(this.goose.x, this.goose.y, this.goose.rotation);
-    //     }
-    // }
 
     incrementScore(): void {
         this.score++;
